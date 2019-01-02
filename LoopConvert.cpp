@@ -13,6 +13,7 @@
 using namespace llvm;
 
 cl::opt<std::string> InputFile(cl::desc("<input bitcode>"), cl::Positional, cl::init("-"));
+cl::opt<std::string> OutputFile(cl::desc("output file"), cl::ConsumeAfter, cl::init("a.out"));
 
 int main(int argc, char** argv) {
 	PrettyStackTraceProgram X(argc, argv);
@@ -48,7 +49,7 @@ int main(int argc, char** argv) {
 
 	// write changed IR to test_renamed file
 	std::error_code EC;
-  	llvm::raw_fd_ostream OS("test_renamed.bc", EC, llvm::sys::fs::F_None);
+  	llvm::raw_fd_ostream OS(OutputFile, EC, llvm::sys::fs::F_None);
   	WriteBitcodeToFile(*module, OS);
   	OS.flush();
 
