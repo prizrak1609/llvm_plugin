@@ -4,7 +4,7 @@ add_clang_executable(loop-convert
   LoopConvert.cpp
   )
 
-llvm_map_components_to_libnames(ReferencedLLVMLibs core executionengine irreader instrumentation interpreter object support native)
+llvm_map_components_to_libnames(ReferencedLLVMLibs core executionengine irreader instrumentation interpreter object support native bitwriter)
 
 target_link_libraries(loop-convert
   PRIVATE

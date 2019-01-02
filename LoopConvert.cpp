@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	// write changed IR to test_renamed file
+	// write changed IR to OutputFile file
 	std::error_code EC;
   	llvm::raw_fd_ostream OS(OutputFile, EC, llvm::sys::fs::F_None);
   	WriteBitcodeToFile(*module, OS);
