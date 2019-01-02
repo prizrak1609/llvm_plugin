@@ -1,5 +1,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -9,6 +10,8 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/IR/IRPrintingPasses.h"
 
 using namespace llvm;
 
@@ -40,11 +43,33 @@ int main(int argc, char** argv) {
 
 	auto& functionList = module->getFunctionList();
 
+	int count = 1;
+	int size = functionList.size();
 	// rename sensitive function
-	for (Function& func : functionList) {
+	for (Module::FunctionListType::iterator funcIter = functionList.begin(); funcIter != functionList.end(); funcIter++) {
+		Function& func = *funcIter;
 		if (func.getName() == "_Z13checkSecurityv") {
 			func.setName(Twine("renamed"));
 		}
+
+		outs() << count << "/";
+		if (! func.getBasicBlockList().empty()) {
+			BasicBlock& block = func.getEntryBlock();
+			IRBuilder<> builder(&block);
+			auto* integerType = llvm::IntegerType::get(context, 8);
+			auto* constantInt = llvm::ConstantInt::get(integerType, 0, true);
+			outs() <<  " processed /";
+			for (BasicBlock::iterator begin = block.begin(); begin != block.end(); begin++) {
+				auto* _allocInstruction = builder.CreateAlloca(integerType);
+				_allocInstruction->removeFromParent();
+				auto* _store = builder.CreateStore(constantInt, _allocInstruction, true);
+				_store->removeFromParent();
+				_store->insertBefore(&*begin);
+				_allocInstruction->insertBefore(_store);
+			}
+		}
+		outs() << size << "\n";
+		count++;
 	}
 
 	// write changed IR to OutputFile file
@@ -52,6 +77,12 @@ int main(int argc, char** argv) {
   	llvm::raw_fd_ostream OS(OutputFile, EC, llvm::sys::fs::F_None);
   	WriteBitcodeToFile(*module, OS);
   	OS.flush();
+
+	// ModuleAnalysisManager analisys;
+	// ModulePassManager manager;
+	// manager.addPass(PrintModulePass(OS));
+	// manager.run(*module, analisys);
+	// OS.flush();
 
 	return 0;
 }
